@@ -1,0 +1,260 @@
+## O que é o Command?
+### 1. Introdução
+
+Segundo o Refactoring.Guru, ele é um padrão que transforma um pedido em um objeto independente que contém toda a informação sobre o pedido. 
+
+Essa transformação permite executá-la sem que o componente solicitante precise conhecer os detalhes.
+
+### Problema:
+- Controle remoto com dois botões → ligar e desligar;
+- Uma implementação simples poderia fazer cada botão chamar de forma diferente um método da tv → cria uma dependência: controle tem que conhecer a classe ```Televisao```
+Outro:
+- Você cria uma classe `Botao` que pode ser usados por vários diferentes → cada um deve fazer uma coisa diferente → Solução simples: Criar subclasses, contudo, ficariam muitas subclasses (e corre o risco de quebrar o código se você modificar a principal).
+
+### Solução:
+- Propõe representar cada ação como um OBJETO, assim, cada botão não precisaria saber qual dispositivo será controlado, apenas precisando conhecer uma operação genérica `executar()` 
+
+GUI → Responsável por mostrar os botões, receber cliques e apresentar mensagens.
+Lógica → realiza as operações no sistema. 
+Divisão: significa não misturar responsabilidades diferentes desnecessariamente.
+
+
+
+
+A aplicação deve ser dividida em camadas. A GUI é responsável por renderizar uma bonita imagem na tela. O trabalho, é tarefa da lógica do negócio. 
+
+Assim, um objeto GUI chama um método da lógica, passando alguns argumentos - Objeto faz um pedido para outro.
+
+No padrão COMMAND, os objetos GUI não devem enviar os pedidos diretamente. Ele deve extrair todos os detalhes do pedido, incluindo o objeto a ser chamado + nome do método + lista de argumentos, justa tudo em uma classe command separada que tem apenas um comando e envia.
+
+Seriam algo como links entre vários GUI e de lógica. O GUI não precisa saber qual objeto de lógica irá receber o pedido e como ele vai ser processado.
+
+Os comandos devem implementar a mesma interface. Comumente, é apenas um método de execução que não pega parâmetros, assim, essa interface permite que você use vários comandos com o mesmo remetente do pedido, sem acoplá-lo com as classes concretas dos comandos.
+
+![[Pasted image 20261021153542.png|459]]
+
+Os comandos se tornam uma camada intermediária conveniente que reduz o acoplamento entre as camadas GUI e a Lógica. 
+
+---
+### 2. Estrutura
+![[Pasted image 20261021153742.png|517]]
+1. Invoker (Remetente) → Inicia o pedido. Deve ter campo para armazenar a referência para um objeto command. Não cria o objeto comando. Ele é pré criado no constructor do client.
+2. Command → Declara apenas um único método para executar o comando.
+3. Comandos concretos → Implementam vários tipos de pedidos - Ele deve passar a chamada para um dos objetos da lógica. 
+4. Receiver (Destinatário) → Contém a lógica. A maioria dos commands apenas lidam com os detalhes de como um pedido é passado para o destinatário, enquanto ele executa o trabalho.
+5. Client → cria e configura objetos comando concretos. Client deve passar todos os parâmetros do pedido (+ instância do destinatário para o constructor do command). 
+### 3. Aplicabilidade
+- Quando quiser parametrizar objetos com operações;
+- Quando quer colocar operações em fila, agendar sua execução ou executá-las remotamente;
+- Quando quer implementar operações reversíveis;
+
+### 4. Como implementar?
+
+1. Declare a interface comando com um único método de execução.
+2. Comece extraindo pedidos para dentro de classes concretas comando que implementam a interface comando. Cada classe deve ter um conjunto de campos para armazenar os argumentos dos pedidos junto com uma referência ao objeto destinatário real. Todos esses valores devem ser inicializados através do construtor do comando.
+3. Identifique classes que vão agir como remetentes. Adicione os campos para armazenar comandos nessas classes. Remetentes devem sempre comunicar-se com seus comandos através da interface comando. Remetentes geralmente não criam objetos comando por conta própria, mas devem obtê-los do código cliente.
+4. Mude os remetentes para que executem o comando ao invés de enviar o pedido para o destinatário diretamente.
+5. O cliente deve inicializar objetos na seguinte ordem:
+	1. Crie os destinatários;
+	2. Crie os comandos, e os associe com os destinatários se necessário.
+	3. Crie os remetentes, e os associe com os comandos específicos.
+
+### 5. Código em Ruby para demonstração
+#### Cenário: Casa Inteligente
+
+```ruby
+# ========================================
+# PARTE 1 — ADAPTER (projeto anterior)
+# ========================================
+
+class Dispositivo
+  def ligar
+    raise NotImplementedError
+  end
+
+  def desligar
+    raise NotImplementedError
+  end
+end
+
+# Bibliotecas externas
+class SmartTV
+  def power_on
+    puts "Smart TV ligada!"
+  end
+
+  def power_off
+    puts "Smart TV desligada!"
+  end
+end
+
+class AC
+  def iniciar_resfriamento
+    puts "Ar-condicionado ligado!"
+  end
+
+  def interromper_resfriamento
+    puts "Ar-condicionado desligado!"
+  end
+end
+
+# Dispositivo compatível
+class Lampada < Dispositivo
+  def ligar
+    puts "Luz acesa!"
+  end
+
+  def desligar
+    puts "Luz desligada!"
+  end
+end
+
+# Adaptadores
+class SmartTVAdapter < Dispositivo
+  def initialize(tv)
+    @tv = tv
+  end
+
+  def ligar
+    @tv.power_on
+  end
+
+  def desligar
+    @tv.power_off
+  end
+end
+
+class ACAdapter < Dispositivo
+  def initialize(ac)
+    @ac = ac
+  end
+
+  def ligar
+    @ac.iniciar_resfriamento
+  end
+
+  def desligar
+    @ac.interromper_resfriamento
+  end
+end
+
+# ========================================
+# PARTE 2 — COMMAND
+# ========================================
+
+# 1. Interface Command
+class Comando
+  def executar
+    raise NotImplementedError
+  end
+end
+# Declara a operação comum que todos os comandos concretos devem implementar. Em Ruby, utilizamos uma classe-base para representar esse contrato.
+
+# 2. Comandos concretos
+class LigarDispositivo < Comando
+  def initialize(dispositivo)
+    @dispositivo = dispositivo
+  end
+
+  def executar
+    @dispositivo.ligar
+  end
+end
+
+class DesligarDispositivo < Comando
+  def initialize(dispositivo)
+    @dispositivo = dispositivo
+  end
+
+  def executar
+    @dispositivo.desligar
+  end
+end
+# Comando recebe o destinatário no construtor e armazena sua referência em @dispositivo;
+# Quando executar() é chamado, encaminha a solicitação para "ligar()";
+# A mesma classe pode ligar qualquer uma, pois não precisa conhecer a classe concreta do equipamento, apenas a interface esperada.
+
+# 3. Invoker (Remetente)
+class ControleRemoto
+  def initialize
+    @botoes = {}
+  end
+
+  def configurar_botao(nome, comando)
+    @botoes[nome] = comando
+  end
+
+  def pressionar(nome)
+    comando = @botoes[nome]
+
+    unless comando
+      raise ArgumentError, "Botao nao configurado"
+    end
+
+    comando.executar
+  end
+end
+# Controle remoto seria o invoker - recebe a solicitação de pressionar o botão, recupera o comando associado e executa a operação. Ele apenas invoca o executar().
+# Hash @botoes permite armazenar diversos comandos, cada um associado a um nome.
+
+# ========================================
+# PARTE 3 — CLIENT (CONFIGURAÇÃO)
+# ========================================
+
+# Criando os destinatários
+tv = SmartTVAdapter.new(SmartTV.new)
+lampada = Lampada.new
+ac = ACAdapter.new(AC.new)
+
+# Criando o controle remoto
+controle = ControleRemoto.new
+
+# Criando e associando os comandos
+controle.configurar_botao(
+  :ligar_tv, LigarDispositivo.new(tv)
+)
+
+controle.configurar_botao(
+  :desligar_tv, DesligarDispositivo.new(tv)
+)
+
+controle.configurar_botao(
+  :ligar_lampada, LigarDispositivo.new(lampada)
+)
+
+controle.configurar_botao(
+  :desligar_lampada, DesligarDispositivo.new(lampada)
+)
+
+controle.configurar_botao(
+  :ligar_ac, LigarDispositivo.new(ac)
+)
+
+controle.configurar_botao(
+  :desligar_ac, DesligarDispositivo.new(ac)
+)
+
+# ========================================
+# PARTE 4 — EXECUÇÃO DOS COMANDOS
+# ========================================
+
+controle.pressionar(:ligar_tv)
+controle.pressionar(:ligar_lampada)
+controle.pressionar(:ligar_ac)
+
+controle.pressionar(:desligar_tv)
+controle.pressionar(:desligar_lampada)
+controle.pressionar(:desligar_ac)
+```
+
+---
+Veja também:
+
+[[O que é um Design Pattern]]
+
+---
+## Referências
+
+REFACTORING.GURU. Command. **Refactoring.Guru**, 2026. Disponível em: https://refactoring.guru/pt-br/design-patterns/command. Acesso em: 19 out. 2026.
+
+REFACTORING.GURU. Command em Ruby. Refactoring.Guru. Disponível em: [https://refactoring.guru/pt-br/design-patterns/command/ruby/example](https://refactoring.guru/pt-br/design-patterns/command/ruby/example). Acesso em: 21 out. 2026.

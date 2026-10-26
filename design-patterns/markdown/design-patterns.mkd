@@ -1,0 +1,18 @@
+# O QUE É UM DESIGN PATTERN?
+
+*Documento feito para o Obsidian - algumas features estarão indisponíveis neste arquivo*
+
+## Introdução
+Design Pattern (ou Padrões de Projeto) "são soluções típicas para problemas comuns em projeto de software" (REFACTORING.GURU, 2026). É como se fossem já blueprints (a base), onde você apenas precisa customizar para adaptá-la à sua situação.
+
+Ele é "um conceito geral para resolver um problema em particular" e são frequentemente confundidos com algoritmos, visto que ambos descrevem soluções típicas para problemas conhecidos. Contudo, Design Pattern é mais uma "descrição de alto nível de uma solução"(REFACTORING.GURU, 2026).
+
+É uma solução **estrutural** ou **comportamental** reutilizável para um problema recorrente de desenvolvimento de software.
+
+Veja também:
+- [[Padrões Comportamentais]]
+- [[Estrutural - Adapter]]
+- [[Comportamental - Command]]
+
+## Referências
+- REFACTORING.GURU. O que é um padrão de projeto? **Refactoring.Guru**, 2026. Disponível em: https://refactoring.guru/pt-br/design-patterns/what-is-pattern. Acesso em: 19 out. 2026.

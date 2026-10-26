@@ -1,0 +1,122 @@
+# ESTRUTURAL - ADAPTER
+
+## O que é o Adapter?
+### 1. Introdução
+
+Segundo o Refactoring.Guru, o adapter é um padrão de projeto estrutural que permite que objetos com interfaces incompatíveis colaborem entre si. Assim, não é necessário modificar suas implementações originais. 
+
+Imagine que você viajou para a Europa e levou seu notebook. O carregador funciona perfeitamente, mas seu plugue não encaixa na tomada disponível. Você não precisa modificar o carregador nem a instalação elétrica. Precisa apenas de um adaptador.
+
+Na programação acontece algo parecido. O adaptador seria o responsável por converter a interface de um objeto para que outro possa entendê-lo, encobrindo um dos objetos para esconder a conversão. O anterior ao adaptador nem o conhece.
+
+![[Pasted image 20261019194601.png|430]]
+
+
+---
+### 2. Estrutura
+#### Adaptador de Objeto
+![[Pasted image 20261019194819.png|354]]
+
+1. O **Client** é quem contém a lógica de negócio do programa;
+2. O **Client Interface** descreve um protocolo que as outras devem seguir;
+3. O **Service** é uma classe útil. Client não usa essa classe diretamente porque ela não tem interface compatível;
+4. O **Adapter** é quem implementa a interface do cliente quanto encobre o objeto do serviço. Ele recebe as chamadas e as traduz em chamadas para o objeto encobrido do serviço;
+---
+#### Adaptador de Classe
+Utiliza herança - o adapter irá herdar interfaces de ambos os objetos. Assim, o Adapter class não precisa 
+![[Pasted image 20261019195141.png|353]]
+
+1. A adaptação ocorre dentro dos métodos sobrescritos. Assim, o resultante pode ser usado em lugar de uma classe cliente existente.
+
+### 3. Aplicabilidade
+- Utilizar quando quer usar uma classe existente, mas a interface não é compatível;
+- Quando quer reutilizar as subclasses existentes que não possuam funcionalidade comum
+
+### 4. Como implementar?
+
+1. Tenha ao menos duas classes com interfaces incompatíveis;
+2. Declare a *client interface* e descreva como o *client* se comunica com o *service*;
+3. Cria a classe adapter e faça seguir a *client interface*. 
+4. Adicione um campo para a classe do adapter armazenar uma referência ao objeto do serviço. Inicializar via constructor - ou passar para o adapter ao chamar os métodos;
+5. Implemente, um por um, os métodos da interface client na classe adapter. Ele deve delegar a maioria do trabalho real para o objeto serviço, lidando apenas com a conversão da interface ou formato dos dados;
+6. Os Clientes devem usar o adapter através da interface client. Isso permite que você mude ou estenda o adaptador sem afetar o código cliente;
+
+### 5. Código em Ruby para demonstração
+#### Cenário: Casa Inteligente
+- Sistema capaz de controlar dispositivos eletrônicos de uma residência. Todos os dispositivos seguem um padrão de comunicação definido "ligar()", "desligar()".
+- Contudo, uma nova televisão chegou e ela usa uma API própria. Seus métodos são "power_on()" e "power_off()". 
+- A fim de evitar problemas, não vamos modificar o código da televisão. Usaremos o adapter;
+
+Casa Inteligente (ligar()) >> Adapter (converte a chamada) >> Smart TV (power_on e power_off)
+
+```ruby
+# 1. Interface esperada pela casa
+class Dispositivo
+  def ligar
+    raise NotImplementedError
+    # Por que? Para indicar que a subclasse deve implementar o método.
+  end
+  def desligar
+    raise NotImplementedError
+  end
+end
+# A classe Dispositivo representa o contrato esperado pelo sistema da casa.
+# ----
+
+# 2. Biblioteca Externa (API da TV)
+class SmartTV
+  def power_on
+    puts "Smart TV ligada!"
+  end
+  def power_off
+    puts "Smart TV desligada!"
+  end
+end
+
+# 3. Adapter entre o sistema e a Smart TV:
+class SmartTVAdapter < Dispositivo
+  def initialize(tv) # Constructor
+    @tv = tv
+  end
+  def ligar
+    @tv.power_on
+  end
+  def desligar
+    @tv.power_off
+  end
+end
+# Sistema solicita "ligar()", o adaptador chama "power_on()" na TV.
+# @tv armazena uma instância da classe SmartTV, fazendo com que o adaptador tenha uma referência ao objeto que está adaptando.
+
+# 4. Cliente: Sistema de Automação
+
+class CasaInteligente
+  def initialize(dispositivo)
+    @dispositivo = dispositivo
+  end
+  def ativar
+    @dispositivo.ligar
+  end
+  def desativar
+    @dispositivo.desligar
+  end
+end
+# Casa não sabe o funcionamento da TV - apenas chama o método que espera achar;
+
+# 5. Execução
+tv = SmartTV.new
+adaptador = SmartTVAdapter.new(tv)
+casa = CasaInteligente.new(adaptador)
+casa.ativar
+casa.desativar
+```
+
+---
+Veja também:
+
+[[O que é um Design Pattern]]
+
+---
+## Referências
+
+REFACTORING.GURU. Adapter. **Refactoring.Guru**, 2026. Disponível em: https://refactoring.guru/pt-br/design-patterns/adapter. Acesso em: 19 out. 2026.
